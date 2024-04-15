@@ -19,6 +19,9 @@ const userSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  connections: {
+    type: Array,
+  },
 });
 
 const User = mongoose.model("user", userSchema); //creating a model using a schema

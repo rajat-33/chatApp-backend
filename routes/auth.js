@@ -23,7 +23,11 @@ router.post("/signup", async (req, res) => {
       },
     };
     const auth_token = jwt.sign(data, JWT_SECRET);
-    res.send({ status: "success", auth_token: auth_token });
+    res.send({
+      status: "success",
+      userName: req.body.userName,
+      auth_token: auth_token,
+    });
     // res.send("signup");
   } catch (e) {
     console.log(e.message);
@@ -36,14 +40,38 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ userName: req.body.userName });
     console.log(user);
+    if (!user) {
+      throw new Error("incorrect credentials!");
+    }
     const passCompare = await bcrypt.compare(req.body.password, user.password);
     console.log(passCompare);
     if (!passCompare) {
-      throw new Error("incorrect password");
+      throw new Error("incorrect credentials!");
     }
-    res.send("login successful!");
+    const data = {
+      user: {
+        userName: req.body.userName,
+      },
+    };
+    const auth_token = jwt.sign(data, JWT_SECRET);
+    res.send({ status: "success", auth_token: auth_token });
   } catch (e) {
-    res.status(404).send("incorrect cred");
+    console.log(e.message);
+    res.status(404).send({ status: "failed", msg: e.message });
+  }
+});
+
+router.get("/getUsers", async (req, res) => {
+  console.log(req.body);
+  try {
+    const getUserResult = await User.find(); //filter the self username in frontend
+    if (!getUserResult) {
+      throw new Error("Internal Server Error!");
+    }
+    res.send({ status: "success", getUserResult });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).send({ status: "failed", msg: e.message });
   }
 });
 
