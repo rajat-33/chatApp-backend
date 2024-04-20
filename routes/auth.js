@@ -9,6 +9,11 @@ const JWT_SECRET = "AGoodGirlsGuideToMurder";
 router.post("/signup", async (req, res) => {
   console.log(req.body);
   try {
+    const user = await User.findOne({ userName: req.body.userName });
+    console.log(user);
+    if (user) {
+      throw new Error("This username has already been taken!");
+    }
     const salt = await bcrypt.genSalt(10);
     const securePassword = await bcrypt.hash(req.body.password, salt);
     const newUser = await User.create({
@@ -23,7 +28,7 @@ router.post("/signup", async (req, res) => {
       },
     };
     const auth_token = jwt.sign(data, JWT_SECRET);
-    res.send({
+    res.status(200).send({
       status: "success",
       userName: req.body.userName,
       auth_token: auth_token,
@@ -31,7 +36,7 @@ router.post("/signup", async (req, res) => {
     // res.send("signup");
   } catch (e) {
     console.log(e.message);
-    res.send({ status: "failed", msg: "Internal Server Error" });
+    res.status(400).send({ status: "failed", msg: e.message });
   }
 });
 
@@ -54,17 +59,38 @@ router.post("/login", async (req, res) => {
       },
     };
     const auth_token = jwt.sign(data, JWT_SECRET);
-    res.send({ status: "success", auth_token: auth_token });
+    res.status(200).send({ status: "success", auth_token: auth_token });
   } catch (e) {
     console.log(e.message);
-    res.status(404).send({ status: "failed", msg: e.message });
+    res.status(400).send({ status: "failed", msg: e.message });
   }
 });
 
 router.get("/getUsers", async (req, res) => {
-  console.log(req.body);
+  // console.log(req);
   try {
-    const getUserResult = await User.find(); //filter the self username in frontend
+    const searchString = req.params.searchString;
+    const getUserResult = await User.find();
+    if (!getUserResult) {
+      throw new Error("Internal Server Error!");
+    }
+    res.send({ status: "success", getUserResult });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).send({ status: "failed", msg: e.message });
+  }
+});
+
+router.get("/getUsers/:searchString", async (req, res) => {
+  // console.log(req);
+  try {
+    const searchString = req.params.searchString;
+    const getUserResult = await User.find({
+      $or: [
+        { userName: { $regex: searchString, $options: "i" } },
+        { name: { $regex: searchString, $options: "i" } },
+      ],
+    }); //filter the self username in frontend
     if (!getUserResult) {
       throw new Error("Internal Server Error!");
     }
