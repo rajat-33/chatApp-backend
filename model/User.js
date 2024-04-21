@@ -22,6 +22,10 @@ const userSchema = new Schema({
   connections: {
     type: Array,
   },
+  isActive: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const User = mongoose.model("user", userSchema); //creating a model using a schema

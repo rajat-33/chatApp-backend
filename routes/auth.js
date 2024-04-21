@@ -20,6 +20,7 @@ router.post("/signup", async (req, res) => {
       name: req.body.name,
       userName: req.body.userName,
       password: securePassword,
+      isActive: true,
     });
     await newUser.save();
     const data = {
@@ -59,6 +60,10 @@ router.post("/login", async (req, res) => {
       },
     };
     const auth_token = jwt.sign(data, JWT_SECRET);
+    await User.findOneAndUpdate(
+      { userName: req.body.userName },
+      { isActive: true }
+    );
     res.status(200).send({ status: "success", auth_token: auth_token });
   } catch (e) {
     console.log(e.message);
@@ -69,7 +74,6 @@ router.post("/login", async (req, res) => {
 router.get("/getUsers", async (req, res) => {
   // console.log(req);
   try {
-    const searchString = req.params.searchString;
     const getUserResult = await User.find();
     if (!getUserResult) {
       throw new Error("Internal Server Error!");
@@ -94,7 +98,25 @@ router.get("/getUsers/:searchString", async (req, res) => {
     if (!getUserResult) {
       throw new Error("Internal Server Error!");
     }
-    res.send({ status: "success", getUserResult });
+    res.status(200).send({ status: "success", getUserResult });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).send({ status: "failed", msg: e.message });
+  }
+});
+
+router.patch("/logOutUser/:userName", async (req, res) => {
+  // console.log(req);
+  try {
+    const userName = req.params.userName;
+    const getUserResult = await User.find({
+      userName: userName,
+    }); //filter the self username in frontend
+    if (!getUserResult) {
+      throw new Error("Internal Server Error!");
+    }
+    await User.findOneAndUpdate({ userName: userName }, { isActive: false });
+    res.status(200).send({ status: "success" });
   } catch (e) {
     console.log(e.message);
     res.status(500).send({ status: "failed", msg: e.message });
