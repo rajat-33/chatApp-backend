@@ -10,6 +10,10 @@ const requestSchema = new Schema({
     type: String,
     required: true,
   },
+  isAnswered: {
+    type: Boolean,
+    default: false,
+  },
   timestamp: {
     type: Date,
     default: Date().now,

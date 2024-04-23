@@ -5,13 +5,21 @@ const User = require("../model/User");
 
 router.post("/makeRequest", async (req, res) => {
   try {
-    // if (req.body.sender == req.body.receiver) {
-    //   throw new Error("Can't send a self connection request");
-    // }
     const userSender = await User.findOne({ userName: req.body.sender });
     const userReceiver = await User.findOne({ userName: req.body.receiver });
     if (!userSender || !userReceiver) {
       throw new Error("Connection can't be established!");
+    }
+    const isReqExist1 = await Request.findOne({
+      sender: req.body.sender,
+      receiver: req.body.receiver,
+    });
+    const isReqExist2 = await Request.findOne({
+      receiver: req.body.sender,
+      sender: req.body.receiver,
+    });
+    if (isReqExist1 || isReqExist2) {
+      throw new Error("A request has been sent already!");
     }
     const newRequest = await Request.create(req.body);
     await newRequest.save();
@@ -21,13 +29,17 @@ router.post("/makeRequest", async (req, res) => {
   }
 });
 
-router.get("/getRequest", async (req, res) => {
+router.get("/getRequest/:id", async (req, res) => {
   try {
-    const userSender = await User.findOne({ userName: req.body.userName });
+    const id = req.params.id;
+    const userSender = await User.findOne({ userName: id });
     if (!userSender) {
       throw new Error("Internal Server Error!");
     }
-    const requestResults = await Request.find({ receiver: req.body.userName });
+    const requestResults = await Request.find({
+      receiver: id,
+      isAnswered: false,
+    });
 
     res.status(200).send({ status: "success", requestResults });
   } catch (e) {
@@ -78,12 +90,12 @@ router.patch("/acceptRequest", async (req, res) => {
     console.log(updateResult1);
     console.log(updateResult2);
 
-    const deleteResult = await Request.deleteOne(
+    const deleteResult = await Request.findOneAndUpdate(
       {
         sender: req.body.sender,
         receiver: req.body.receiver,
       },
-      { new: true }
+      { isAnswered: true }
     );
     if (deleteResult.deletedCount === 0) {
       throw new Error("Request cannot be deleted!");
