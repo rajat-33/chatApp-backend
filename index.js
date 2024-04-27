@@ -18,9 +18,11 @@ connectToMongo();
 
 io.on("connection", (socket) => {
   // Handle socket events here
-  socket.on("chatup", (msg) => {
-    console.log(msg);
-    io.emit(msg.receiver, msg);
+  socket.onAny((eventName, ...args) => {
+    if (eventName.startsWith("chat")) {
+      console.log(`Received event '${eventName}', ${args[0]}`);
+      io.emit(eventName, args[0]);
+    }
   });
 });
 

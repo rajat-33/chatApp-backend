@@ -89,7 +89,7 @@ router.get("/getUsers/:searchString", async (req, res) => {
   // console.log(req);
   try {
     const searchString = req.params.searchString;
-    const getUserResult = await User.find({
+    const getUserResult = await User.findOne({
       $or: [
         { userName: { $regex: searchString, $options: "i" } },
         { name: { $regex: searchString, $options: "i" } },

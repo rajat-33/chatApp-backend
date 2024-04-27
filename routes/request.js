@@ -47,17 +47,19 @@ router.get("/getRequest/:id", async (req, res) => {
   }
 });
 
-router.delete("/deleteRequest", async (req, res) => {
+router.delete("/deleteRequest/:id1/:id2", async (req, res) => {
   try {
-    const userSender = await User.findOne({ userName: req.body.sender });
-    const userReceiver = await User.findOne({ userName: req.body.receiver });
+    const sender = req.params.id1;
+    const receiver = req.params.id2;
+    const userSender = await User.findOne({ userName: sender });
+    const userReceiver = await User.findOne({ userName: receiver });
     if (!userSender || !userReceiver) {
       throw new Error("Request cannot be deleted!");
     }
     const deleteResult = await Request.deleteOne(
       {
-        sender: req.body.sender,
-        receiver: req.body.receiver,
+        sender: sender,
+        receiver: receiver,
       },
       { new: true }
     );
@@ -71,20 +73,22 @@ router.delete("/deleteRequest", async (req, res) => {
   }
 });
 
-router.patch("/acceptRequest", async (req, res) => {
+router.patch("/acceptRequest/:id1/:id2", async (req, res) => {
   try {
-    const userSender = await User.findOne({ userName: req.body.sender });
-    const userReceiver = await User.findOne({ userName: req.body.receiver });
+    const sender = req.params.id1;
+    const receiver = req.params.id2;
+    const userSender = await User.findOne({ userName: sender });
+    const userReceiver = await User.findOne({ userName: receiver });
     if (!userSender || !userReceiver) {
       throw new Error("Request cannot be accepted!");
     }
     const updateResult1 = await User.findOneAndUpdate(
-      { userName: req.body.sender },
-      { connections: [...userSender.connections, req.body.receiver] }
+      { userName: sender },
+      { connections: [...userSender.connections, receiver] }
     );
     const updateResult2 = await User.findOneAndUpdate(
-      { userName: req.body.receiver },
-      { connections: [...userReceiver.connections, req.body.sender] }
+      { userName: receiver },
+      { connections: [...userReceiver.connections, sender] }
     );
 
     console.log(updateResult1);
@@ -92,8 +96,8 @@ router.patch("/acceptRequest", async (req, res) => {
 
     const deleteResult = await Request.findOneAndUpdate(
       {
-        sender: req.body.sender,
-        receiver: req.body.receiver,
+        sender: sender,
+        receiver: receiver,
       },
       { isAnswered: true }
     );
