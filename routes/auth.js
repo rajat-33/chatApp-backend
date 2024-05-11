@@ -71,6 +71,29 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//this is getUser api for authenticating the logged in user and fetch
+router.get("/getUser/:userName", async (req, res) => {
+  try {
+    //authenticating the auth_token
+    const userName = req.params.userName;
+    const token = req.header("auth-token");
+    if (!token) {
+      throw Error("Please authenticate using a valid token");
+    }
+    const data = jwt.verify(token, JWT_SECRET);
+
+    //fetching the user
+    const getUserResult = await User.findOne({ userName: userName });
+    if (!getUserResult) {
+      throw new Error("Internal Server Error!");
+    }
+    res.send({ status: "success", getUserResult });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).send({ status: "failed", msg: e.message });
+  }
+});
+
 router.get("/getUsers", async (req, res) => {
   // console.log(req);
   try {
@@ -120,6 +143,40 @@ router.patch("/logOutUser/:userName", async (req, res) => {
   } catch (e) {
     console.log(e.message);
     res.status(500).send({ status: "failed", msg: e.message });
+  }
+});
+
+router.patch("/deleteFriend/:id1/:id2", async (req, res) => {
+  try {
+    const sender = req.params.id1;
+    const receiver = req.params.id2;
+    const userSender = await User.findOne({ userName: sender });
+    const userReceiver = await User.findOne({ userName: receiver });
+    if (!userSender || !userReceiver) {
+      throw new Error("Request cannot be accepted!");
+    }
+    const updateResult1 = await User.findOneAndUpdate(
+      { userName: sender },
+      {
+        connections: userSender.connections.filter((e) => {
+          return e != receiver;
+        }),
+      }
+    );
+    const updateResult2 = await User.findOneAndUpdate(
+      { userName: receiver },
+      {
+        connections: userReceiver.connections.filter((e) => {
+          return e != sender;
+        }),
+      }
+    );
+    console.log(updateResult1);
+    console.log(updateResult2);
+
+    res.status(200).send({ status: "success" });
+  } catch (e) {
+    res.status(404).send({ status: "failed", message: e.message });
   }
 });
 
