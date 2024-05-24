@@ -33,6 +33,7 @@ router.post("/signup", async (req, res) => {
       status: "success",
       userName: req.body.userName,
       auth_token: auth_token,
+      session_end_time: Date.now(),
     });
     // res.send("signup");
   } catch (e) {
@@ -64,7 +65,11 @@ router.post("/login", async (req, res) => {
       { userName: req.body.userName },
       { isActive: true }
     );
-    res.status(200).send({ status: "success", auth_token: auth_token });
+    res.status(200).send({
+      status: "success",
+      auth_token: auth_token,
+      session_end_time: Date.now(),
+    });
   } catch (e) {
     console.log(e.message);
     res.status(400).send({ status: "failed", msg: e.message });
