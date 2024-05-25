@@ -29,6 +29,17 @@ router.post("/makeRequest", async (req, res) => {
   }
 });
 
+// for debugging
+router.get("/getRequest", async (req, res) => {
+  try {
+    const requestResults = await Request.find();
+
+    res.status(200).send({ status: "success", requestResults });
+  } catch (e) {
+    res.status(500).send({ status: "failed", message: e.message });
+  }
+});
+
 router.get("/getRequest/:id", async (req, res) => {
   try {
     const id = req.params.id;

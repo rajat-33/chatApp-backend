@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../model/User");
+const Request = require("../model/Request");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -117,7 +118,7 @@ router.get("/getUsers/:searchString", async (req, res) => {
   // console.log(req);
   try {
     const searchString = req.params.searchString;
-    const getUserResult = await User.findOne({
+    const getUserResult = await User.find({
       $or: [
         { userName: { $regex: searchString, $options: "i" } },
         { name: { $regex: searchString, $options: "i" } },
@@ -176,9 +177,23 @@ router.patch("/deleteFriend/:id1/:id2", async (req, res) => {
         }),
       }
     );
-    console.log(updateResult1);
-    console.log(updateResult2);
-
+    const deleteResult1 = await Request.deleteOne(
+      {
+        sender: sender,
+        receiver: receiver,
+      },
+      { new: true }
+    );
+    const deleteResult2 = await Request.deleteOne(
+      {
+        sender: receiver,
+        receiver: sender,
+      },
+      { new: true }
+    );
+    if (deleteResult1.deletedCount === 0 && deleteResult2.deletedCount === 0) {
+      throw new Error("Friend cannot be removed!");
+    }
     res.status(200).send({ status: "success" });
   } catch (e) {
     res.status(404).send({ status: "failed", message: e.message });
