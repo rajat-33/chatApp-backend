@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const port = 8000;
 const connectToMongo = require("./db");
 const cors = require("cors");
+
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
